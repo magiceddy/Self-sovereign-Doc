@@ -1,15 +1,12 @@
 # Self-sovereign-Doc
 
-Con questo documento si vogliono presentare le funzionalità esplotate fino ad ora in ambito self-sovereign identity.
-Lo scopo di tale attività è fornire gli strumenti apportuni agli utenti, agli Identity Providers e ai Service Providers per operare su un framework basato su blockchain.
-
-L'attuale caso d'uso permette ad un utente di crittografare tramite una coppia di chiavi (pubblica e privata) una rappresentazione della propria identità e salvarne l'hash su blockchain. Un utente potrà inoltre condividere tale identità con un Service Provider e potra delegarlo per condividerla verso terze parti.
+Il caso d'uso permette ad un utente di crittografare tramite una coppia di chiavi (pubblica e privata) una rappresentazione della propria identità e salvarne l'hash su blockchain. Un utente potrà inoltre condividere tale identità con un Service Provider e potra delegarlo per condividerla verso terze parti.
 
 Il framework si basa sul protocollo [Stow](https://stow-protocol.com/)
 
 Di seguito verrà presentati gli step realizzativi.
 
-1. Simulazione generazione coppia di chiavi da parte della JavaCard
+1. In questo passaggio viene simulata la creazione della coppia di chiavi da parte di una JavaCard
 ```javascript
 // creazione seed da una stringa mnemorica
 const seed = bip39.mnemonicToSeed("possible cloud busy fashion report enact race congress pool enlist motion perfect");
@@ -38,14 +35,14 @@ const provider1KeyPairs = genKeyPairFromSecret(provider1PrivKey);
 const provider2KeyPairs = genKeyPairFromSecret(provider2PrivKey);
 ```
 
-2. Registro i singoli utenti nello Smart Contract degli utenti
+2. Registro l'utente, il Provider1 e Provider2 nello Smart Contract degli utenti
 ```javascript
 await users.register({ from: userAddress });
 await users.register({ from: provider1Address });
 await users.register({ from: provider2Address });
 ```
 
-3. Crypto la mia identità con la mia chiave pubblica e la salvo su IPFS
+3. Crypto l'identità tramite la chiave pubblica dell'utente e salvo l'identità su IPFS
 ```javascript
 const identity = { name: 'Magic', surname: 'Eddy', age: '33' };
 const encrypted = Stow.util.encrypt(userKeyPairs.publicKey, JSON.stringify(identity));
@@ -54,10 +51,10 @@ const encrypted = Stow.util.encrypt(userKeyPairs.publicKey, JSON.stringify(ident
 const userDataUri = await ipfs.addJSONAsync(encrypted);
 ```
 
-4. Salvo la rappresentazione della mia identità nello Smart Contract dei dati
+4. Salvo la rappresentazione dell'identità nello Smart Contract dei dati
 ```javascript
 
-// creo il "manifesto" dei miei dati
+// creo il "manifesto" dei dati
 const metadata = {
   dataFormat: "json",
   domain: "social media",
@@ -71,38 +68,38 @@ const metadata = {
   creationDate: new Date()
 };
 
-// creo l'hash dei miei dati
+// creo l'hash dei dati
 const dataHash = stow.web3.utils.sha3(JSON.stringify(identity));
 
 // salvo l'hash dei dati, il manifesto e l'uri per recuparare i dati su IPFS
 await stow.addRecord(dataHash, metadata, userDataUri)
 ```
 
-5. Leggo i riferimenti salvati su blockchain e recupero la mia identità su IPFS
+5. Leggo i riferimenti salvati su blockchain e recupero l'identità su IPFS
 ```javascript
 
-// recupero i riferimenti tramite l'hash della mia identità
+// recupero i riferimenti tramite l'hash dell'identità
 const userRecord = await stow.getRecord(dataHash);
 
-// tramite l'uri recupero la rappresentazione criptata dei miei dati
+// tramite l'uri recupero la rappresentazione criptata dei dati
 const userDataEncryFromIPFS = await ipfs.catJSONAsync(userRecord.dataUri);
 
 // decripto i dati tramite la chiave privata
 const userDecryptIdentity = Stow.util.decrypt(userKeyPairs.privateKey, userDataEncryFromIPFS);
 ```
 
-6. Condivido i miei dati al service privider criptandoli tramite la sua chiave pubblica e salvandoli su IPFS
+6. Condivido i dati al service privider criptandoli tramite la sua chiave pubblica e salvandoli su IPFS
 ```javascript
 const privaderCryptoData = Stow.util.encrypt(provider1KeyPairs.publicKey, userDecryptIdentity);
 const providerDataUri = await ipfs.addJSONAsync(privaderCryptoData);
 ```
 
-7. Do accesso ai miei riferimenti salvati su blockchain al provider1
+7. Do accesso ai riferimenti salvati su blockchain al provider1
 ```javascript
 await permissions.grantAccess(dataHash, providerAddress, providerDataUri);
 ```
 
-8. Il provider recuper le mie informazioni su IPFS
+8. Il provider recuper le informazioni su IPFS
 ```javascript
 const providerDataEncryFromIPFS = await ipfs.catJSONAsync(ProviderDataUri);
 
@@ -110,12 +107,12 @@ const providerDataEncryFromIPFS = await ipfs.catJSONAsync(ProviderDataUri);
 const providerDecrypt = Stow.util.decrypt(provider1KeyPairs.privateKey, providerDataEncryFromIPFS);
 ```
 
-9. Delego il priveder uno a condividere i miei dati tramite lo Smart Contract dei permessi
+9. Delego il priveder uno a condividere i dati dell' utente tramite lo Smart Contract dei permessi
 ```javascript
 await permissions.addDelegate(provider1Address);
 ```
 
-10. Il priveder1 condivide le mie informazioni con il privider2 firmandole con la chiave pubblica del provider2 e salva su IPFS
+10. Il priveder1 condivide le informazioni dell'utente con il privider2 firmandole con la chiave pubblica del provider2 e salva su IPFS
 ```javascript
 const privader2CryptData = Stow.util.encrypt(provider2KeyPairs.publicKey, providerDecrypt);
 const Provider2DataUri = await ipfs.addJSONAsync(privader2CryptData);
