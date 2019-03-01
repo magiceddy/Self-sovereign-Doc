@@ -19,7 +19,7 @@ const user =  wallet.derivePath("m/44'/60'/0'/0/99");
 const provider1 =  wallet.derivePath("m/44'/60'/0'/0/100");
 const provider2 = wallet.derivePath("m/44'/60'/0'/0/101");
 
-// recupero le chiavi provate dai singoli wallet
+// recupero le chiavi private dai singoli wallet
 const userPrivKey = user.getWallet().getPrivateKey();
 const provider1PrivKey = provider1.getWallet().getPrivateKey();
 const provider1PrivKey = provider2.getWallet().getPrivateKey();
