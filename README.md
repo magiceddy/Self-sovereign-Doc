@@ -25,7 +25,7 @@ const provider1PrivKey = provider1.getWallet().getPrivateKey();
 const provider1PrivKey = provider2.getWallet().getPrivateKey();
 
 // recupero gli address dai singoli wallet
-const userAddress = user.getWallet().getPrivateKey();
+const userAddress = user.getWallet().getAddress();
 const provider1Address = provider1.getWallet().getAddress();
 const provider2Address = provider2.getWallet().getAddress();
 
